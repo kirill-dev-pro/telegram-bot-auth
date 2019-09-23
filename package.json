@@ -1,0 +1,30 @@
+{
+  "name": "telegram-bot-auth",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./index.js",
+  "scripts": {
+    "test": "standard ."
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  },
+  "keywords": [
+    "auth",
+    "login",
+    "telegram",
+    "bot"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zmeu213/telegram-bot-auth.git"
+  },
+  "author": "Kirill Chuprov",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^4.1.1"
+  },
+  "devDependencies": {
+    "standard": "^14.3.1"
+  }
+}
