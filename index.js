@@ -1,10 +1,19 @@
 /* global Request FormData fetch Headers */
 /* eslint-disable camelcase */
 
-const debug = require('debug')('telegram-login')
+const debug = require('debug')('telegram-bot-auth')
+
+const TELEGRAM_BASE_URL = 'https://oauth.telegram.org/auth'
 
 const checkResponseJSON = response => response.clone().json().then(() => true).catch(() => false)
 const checkResponseText = response => response.clone().text().then(() => true).catch(() => false)
+
+const requestAuthLink = (botId, origin) =>
+  `${TELEGRAM_BASE_URL}/request?bot_id=${botId}&origin=${encodeURIComponent(origin)}&request_access=write`
+const requestTokenLink = (botId, origin) =>
+  `${TELEGRAM_BASE_URL}/login?bot_id=${botId}&origin=${encodeURIComponent(origin)}`
+const requestUserDataLink = (botId, lang = 'en') =>
+  `${TELEGRAM_BASE_URL}/get?bot_id=${botId}&lang=${lang}`
 
 /**
  * Params:
@@ -14,6 +23,12 @@ const checkResponseText = response => response.clone().text().then(() => true).c
  */
 
 module.exports = async function loginViaTelegram (params) {
+  if (!params.botId || typeof params.botId !== 'number')
+    throw new Error('botId parameter should be number')
+  if (!params.origin || typeof params.origin !== 'string')
+    throw new Error('origin paramater should be string')
+  if (!params.phone || typeof params.phone !== 'string')
+    throw new Error('phone parameter should be string') 
   try {
     const cookies = await requestTelegramLogin(params)
     const token = await loginStatusCheck(params, cookies)
@@ -31,7 +46,7 @@ async function requestTelegramLogin ({ phone, botId, origin }) {
   const formData = new FormData()
   try {
     formData.append('phone', phone.replace(/\+/g, ''))
-    const request = new Request(`https://oauth.telegram.org/auth/request?bot_id=${botId}&origin=${encodeURIComponent(origin)}&request_access=write`, {
+    const request = new Request(requestAuthLink(botId, origin), {
       method: 'POST',
       body: formData
     })
@@ -64,9 +79,7 @@ async function checkTelegramLoginStatus ({ phone, botId, origin }, { stel_ssid, 
   try {
     const headers = new Headers()
     headers.append('Cookie', `stel_ssid=${stel_ssid}; stel_tsession_${phone}=${stel_tsession}; stel_tsession=${stel_tsession}`)
-    // headers.append('stel_tsession', stel_tsession)
-    // headers.append(`stel_tsession_${phone.replace(/\+/g, '')}`, stel_tsession)
-    const request = new Request(`https://oauth.telegram.org/auth/login?bot_id=${botId}&origin=${encodeURIComponent(origin)}`, {
+    const request = new Request(requestTokenLink(botId, origin), {
       method: 'POST',
       headers
     })
@@ -78,7 +91,7 @@ async function checkTelegramLoginStatus ({ phone, botId, origin }, { stel_ssid, 
   if (await checkResponseJSON(response)) {
     const status = await response.clone().json()
     if (!status) {
-      return false
+      return null
     } else {
       const cookie = response.headers.get('set-cookie')
       const stel_token = /(?:stel_token=)(\S+)(?=;)/.exec(cookie)[1]
@@ -111,13 +124,13 @@ function loginStatusCheck (params, cookies) {
   })
 }
 
-async function getTelegramUser ({ botId, origin }, { stel_ssid }, { stel_token }) {
+async function getTelegramUser ({ botId, origin, lang }, { stel_ssid }, { stel_token }) {
   const headers = new Headers()
   const formData = new FormData()
   headers.append('Cookie', `stel_ssid=${stel_ssid}; stel_token=${stel_token}`)
   headers.append('X-Requested-With', 'XMLHttpRequest')
   formData.append('origin', origin)
-  const request = new Request(`https://oauth.telegram.org/auth/get?bot_id=${botId}&lang=en`, {
+  const request = new Request(requestUserDataLink(botId, lang), {
     method: 'POST',
     body: formData,
     headers
