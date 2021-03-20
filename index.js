@@ -3,17 +3,19 @@
 
 const debug = require('debug')('telegram-bot-auth')
 
-const TELEGRAM_BASE_URL = 'https://oauth.telegram.org/auth'
+const TELEGRAM_BASE_URL = 'https://oauth.telegram.org'
 
 const checkResponseJSON = response => response.clone().json().then(() => true).catch(() => false)
 const checkResponseText = response => response.clone().text().then(() => true).catch(() => false)
 
+const requestTelegramWidget = (botNick, origin) =>
+  `${TELEGRAM_BASE_URL}/embed/${botNick}?origin=${encodeURIComponent(origin)}&size=large&request_access=write`
 const requestAuthLink = (botId, origin) =>
-  `${TELEGRAM_BASE_URL}/request?bot_id=${botId}&origin=${encodeURIComponent(origin)}&request_access=write`
+  `${TELEGRAM_BASE_URL}/auth/request?bot_id=${botId}&origin=${encodeURIComponent(origin)}&request_access=write`
 const requestTokenLink = (botId, origin) =>
-  `${TELEGRAM_BASE_URL}/login?bot_id=${botId}&origin=${encodeURIComponent(origin)}`
+  `${TELEGRAM_BASE_URL}/auth/login?bot_id=${botId}&origin=${encodeURIComponent(origin)}`
 const requestUserDataLink = (botId, lang = 'en') =>
-  `${TELEGRAM_BASE_URL}/get?bot_id=${botId}&lang=${lang}`
+  `${TELEGRAM_BASE_URL}/auth/get?bot_id=${botId}&lang=${lang}`
 
 /**
  * Params:
@@ -23,14 +25,12 @@ const requestUserDataLink = (botId, lang = 'en') =>
  */
 
 module.exports = async function loginViaTelegram (params) {
-  if (!params.botId || typeof params.botId !== 'number')
-    throw new Error('botId parameter should be number')
-  if (!params.origin || typeof params.origin !== 'string')
-    throw new Error('origin paramater should be string')
-  if (!params.phone || typeof params.phone !== 'string')
-    throw new Error('phone parameter should be string') 
+  if (!params.botId || typeof params.botId !== 'number') { throw new Error('botId parameter should be number') }
+  if (!params.origin || typeof params.origin !== 'string') { throw new Error('origin paramater should be string') }
+  if (!params.phone || typeof params.phone !== 'string') { throw new Error('phone parameter should be string') }
   try {
-    const cookies = await requestTelegramLogin(params)
+    const session = await requestGetTelegramSession(params)
+    const cookies = await requestTelegramLogin(params, session)
     const token = await loginStatusCheck(params, cookies)
     const tgUser = await getTelegramUser(params, cookies, token)
     return tgUser
@@ -40,7 +40,36 @@ module.exports = async function loginViaTelegram (params) {
   }
 }
 
-async function requestTelegramLogin ({ phone, botId, origin }) {
+async function requestGetTelegramSession ({ botNick, origin }) {
+  let response
+  try {
+    const request = new Request(requestTelegramWidget(botNick, origin))
+    response = await fetch(request, {
+      credentials: 'none',
+      headers: {
+        Cookie: ''
+      }
+    })
+  } catch (err) {
+    throw new Error('Network connection error')
+  }
+  if (response.status === 200) {
+    const cookie = response.headers.get('set-cookie')
+    if (cookie && cookie.indexOf('stel_token=DELETED') > 0) {
+      return requestGetTelegramSession({ botNick, origin })
+    }
+    try {
+      const stel_ssid = /(?:stel_ssid=)(\S+)(?=;)/.exec(cookie)[1]
+      return { stel_ssid }
+    } catch (err) {
+      throw new Error('No cookies recieved. Probably you have to refresh enviroment')
+    }
+  } else {
+    throw new Error('Connection error')
+  }
+}
+
+async function requestTelegramLogin ({ phone, botId, origin }, { stel_ssid }) {
   debug('Requestiong telegram login')
   let response
   const formData = new FormData()
@@ -59,7 +88,7 @@ async function requestTelegramLogin ({ phone, botId, origin }) {
       const success = await response.json()
       if (success) {
         const cookie = response.headers.get('set-cookie')
-        const stel_ssid = /(?:stel_ssid=)(\S+)(?=;)/.exec(cookie)[1]
+        // const stel_ssid = /(?:stel_ssid=)(\S+)(?=;)/.exec(cookie)[1]
         const stel_tsession = /(?:stel_tsession=)(\S+)(?=;)/.exec(cookie)[1]
         return { stel_ssid, stel_tsession }
       }
