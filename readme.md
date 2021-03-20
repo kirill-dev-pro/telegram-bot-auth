@@ -9,9 +9,10 @@ import telegramLogin from 'telegram-bot-auth'
 
 try {
   const params = {
-    botId: 1234567890,
-    origin: 'https://your.domain',
-    phone: '+1234567890'
+    botId: 1234567890, // telergam id of bot
+    botNick: 'yourBot' // telegram username of bot
+    origin: 'https://your.domain', // domain that is linked to your bot
+    phone: '+1234567890' // phone number to auth
   }
   const tgUser = await telegramLogin(params)
 } catch (error) {
