@@ -1,3 +1,10 @@
+import type {
+  LoginViaTelegramParams,
+  TelegramAuthCookies,
+  TelegramSessionToken,
+} from './types/LoginViaTelegramParams'
+import type { TelegramUser } from './types/TelegramUser'
+
 const TELEGRAM_BASE_URL = 'https://oauth.telegram.org'
 
 const checkResponseJSON = (response: Response) =>
@@ -26,23 +33,6 @@ const requestTokenLink = (botId: number, origin: string) =>
 const requestUserDataLink = (botId: number, lang = 'en') =>
   `${TELEGRAM_BASE_URL}/auth/get?bot_id=${botId}&lang=${lang}`
 
-interface LoginViaTelegramParams {
-  botId: number
-  botNick: string
-  origin: string
-  phone: string
-  lang?: string
-}
-
-interface TelegramAuthCookies {
-  stel_ssid: string
-  stel_tsession: string
-}
-
-interface TelegramSessionToken {
-  stel_token: string
-}
-
 /**
  * Function to make perform multiple requests to perform telegram auth
  * @param botId - Telegram bot id
@@ -58,7 +48,7 @@ export async function loginViaTelegram({
   origin,
   phone,
   lang = 'en',
-}: LoginViaTelegramParams) {
+}: LoginViaTelegramParams): Promise<TelegramUser> {
   if (!botId || typeof botId !== 'number') {
     throw new Error('botId parameter should be number')
   }
@@ -245,7 +235,7 @@ async function getTelegramUser(
     const data = await response.json()
     console.error('Login data', data)
     if (data.error) throw new Error(data.error)
-    const telegramUser = data.user
+    const telegramUser = data.user as TelegramUser
     return telegramUser
   } else if (await checkResponseText(response)) {
     // if some error message
@@ -257,3 +247,5 @@ async function getTelegramUser(
     throw new Error('Everything fucked up, dunno why :D')
   }
 }
+
+export default loginViaTelegram

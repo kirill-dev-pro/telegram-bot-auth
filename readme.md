@@ -1,6 +1,6 @@
 # Telegram-bot-auth
 
-Package that provides function to perform telegram bot auth and recieve user data
+Zero dependancy utility package to perfrorm auth with telegram. Blazingly fast, as always
 
 ## Examples
 
@@ -20,7 +20,7 @@ try {
 }
 ```
 
-This will send auth data to telegram servers and then telegram user with such phone number will recieve message from system to accept or decline his auth in `your.domain` 
+This will send auth data to telegram servers and then telegram user with such phone number will recieve message from system to accept or decline his auth in `your.domain`
 
 ## Related Packages
 
