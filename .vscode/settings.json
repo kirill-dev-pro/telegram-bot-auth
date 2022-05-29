@@ -1,0 +1,13 @@
+{
+  "editor.wordWrapColumn": 100,
+  "files.trimTrailingWhitespace": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [ 80, 100 ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.fixAll": true
+  },
+  "eslint.workingDirectories": [
+    { "mode": "auto" }
+  ]
+}

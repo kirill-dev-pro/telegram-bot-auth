@@ -1,13 +1,10 @@
 {
   "name": "telegram-bot-auth",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "description": "",
   "main": "./index.js",
   "scripts": {
-    "test": "standard ."
-  },
-  "standard": {
-    "parser": "babel-eslint"
+    "test": "eslint ."
   },
   "keywords": [
     "auth",
@@ -19,10 +16,16 @@
     "type": "git",
     "url": "https://github.com/Zmeu213/telegram-bot-auth.git"
   },
-  "author": "Kirill Chuprov",
+  "author": "kirill-dev-pro",
   "license": "ISC",
   "dependencies": {},
   "devDependencies": {
-    "standard": "^14.3.1"
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint": "^8.16.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.6.2",
+    "typescript": "^4.6.4"
   }
 }
